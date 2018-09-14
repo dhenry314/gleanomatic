@@ -1,2 +1,2 @@
 # gleanomatic
-Gleanomatic application - Works with RSEngine ti write to and read from ResourceSync endpoints.
+Gleanomatic application - Works with RSEngine to write to and read from ResourceSync endpoints.
