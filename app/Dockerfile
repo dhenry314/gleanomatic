@@ -23,8 +23,6 @@ COPY uwsgi.ini /etc/uwsgi/
 # Custom Supervisord config
 COPY supervisord.conf /etc/supervisord.conf
 
-# add gleamomatic library
-COPY ./lib /gleanomatic/lib
 COPY ./scripts /gleanomatic/scripts
 
 # Add app
