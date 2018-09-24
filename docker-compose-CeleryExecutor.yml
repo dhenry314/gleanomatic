@@ -10,10 +10,6 @@ services:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflow
             - POSTGRES_DB=airflow
-        # Uncomment these lines to persist data on the local filesystem.
-        #     - PGDATA=/var/lib/postgresql/data/pgdata
-        # volumes:
-        #     - ./pgdata:/var/lib/postgresql/data/pgdata
 
     webserver:
         image: puckel/docker-airflow:1.10.0-2
@@ -26,18 +22,9 @@ services:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
             - PYTHONPATH="$PYTHONPATH:${LIB_DEST}"
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
         volumes:
-            #- ./dags:/usr/local/airflow/dags
-            #- ./lib:/usr/local/airflow/lib
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
-            #- ${PLUGINS_PATH}:${PLUGINS_DEST}
-            # Uncomment to include custom plugins
-            # - ./plugins:/usr/local/airflow/plugins
         ports:
             - "8080:8080"
         command: webserver
@@ -67,19 +54,11 @@ services:
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
-            #- ${PLUGINS_PATH}:${PLUGINS_DEST}
-            #- ./dags:/usr/local/airflow/dags
-            #- ${APP_PATH}:${DESTINATION_PATH}
-            # Uncomment to include custom plugins
-            # - ./plugins:/usr/local/airflow/plugins
         environment:
             - LOAD_EX=n
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
+            - PYTHONPATH="$PYTHONPATH:${LIB_DEST}"
         command: scheduler
 
     worker:
@@ -90,16 +69,8 @@ services:
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
-            #- ${PLUGINS_PATH}:${PLUGINS_DEST}
-            #- ./dags:/usr/local/airflow/dags
-            #- ${APP_PATH}:${DESTINATION_PATH}
-            # Uncomment to include custom plugins
-            # - ./plugins:/usr/local/airflow/plugins
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
-            # - POSTGRES_USER=airflow
-            # - POSTGRES_PASSWORD=airflow
-            # - POSTGRES_DB=airflow
-            # - REDIS_PASSWORD=redispass
+            - PYTHONPATH="$PYTHONPATH:${LIB_DEST}"
         command: worker
