@@ -1,6 +1,8 @@
 # RSRestClient - client to interact with a RSEngine REST endpoint
 import urllib.request
 import urllib.parse
+import GleanomaticErrors
+
 
 class RSRestClient:
 
@@ -18,6 +20,18 @@ class RSRestClient:
         
 
     def addResource(self,uri,sourceNamespace,setNamespace):
+        e = None
+        try:
+            with urllib.request.urlopen(uri) as response:
+                content = response.read()
+        except urllib.error.URLError as e:
+            raise("Could not open resource " + str(uri) + " ERROR: " + str(e.reason))
+        except ValueError as e:
+            pass
+        except TypeError as e:
+            pass
+        if e:
+            pass            
         data = urllib.parse.urlencode({'sourceNamespace' : sourceNamespace, 'setNamespace' : setNamespace, 'uri': uri}).encode("utf-8")
         req = urllib.request.Request(self.resourceURI, data=data)
         response = urllib.request.urlopen(req)

@@ -21,7 +21,7 @@ services:
             - LOAD_EX=n
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
-            - PYTHONPATH="$PYTHONPATH:${LIB_DEST}"
+            - PYTHONPATH=${LIB_DEST}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
@@ -58,7 +58,7 @@ services:
             - LOAD_EX=n
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
-            - PYTHONPATH="$PYTHONPATH:${LIB_DEST}"
+            - PYTHONPATH=${LIB_DEST}
         command: scheduler
 
     worker:
@@ -72,5 +72,5 @@ services:
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
-            - PYTHONPATH="$PYTHONPATH:${LIB_DEST}"
+            - PYTHONPATH=${LIB_DEST}
         command: worker
