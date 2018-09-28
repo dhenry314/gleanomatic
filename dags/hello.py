@@ -1,12 +1,11 @@
 import sys
-sys.path.append("/usr/local/airflow/lib/")
 from datetime import datetime
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
-from HelloWorld import HelloWorld
+from gleanomatic import HelloWorld as hw
 
-myHello = HelloWorld()
+myHello = hw.HelloWorld()
 
 def print_hello():
     myHello.sayHello() 

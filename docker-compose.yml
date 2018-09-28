@@ -16,8 +16,8 @@ services:
       - RESOURCE_UNIT=1000
       - DATE_UNIT=day
       - 'RUN=flask run --host=0.0.0.0 --port=80'
-  app:
-    build: ./app
+  webservices:
+    build: ./webServices
     ports:
       - "82:80"
    
