@@ -25,6 +25,7 @@ services:
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
+            - ${RS_PATH}:${RS_DEST}
         ports:
             - "8080:8080"
         command: webserver
@@ -45,6 +46,7 @@ services:
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
+            - ${RS_PATH}:${RS_DEST}
         ports:
             - "5555:5555"
         command: flower
@@ -61,6 +63,7 @@ services:
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
+            - ${RS_PATH}:${RS_DEST}
         command: scheduler
 
     worker:
@@ -74,4 +77,5 @@ services:
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
+            - ${RS_PATH}:${RS_DEST}
         command: worker

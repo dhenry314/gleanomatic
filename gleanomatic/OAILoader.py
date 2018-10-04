@@ -1,5 +1,6 @@
 import sys
 from RSLoader import RSLoader
+import Utils
 import urllib.request
 import requests
 from requests.auth import HTTPBasicAuth
@@ -8,20 +9,42 @@ from xmljson import badgerfish as bf
 from lxml import html
 from lxml import etree
 
+
 class OAILoader(RSLoader):
-
+    
+    OAISource = None
+    OAIMetaDataPrefix = None
+    setNamespace = None
+    OAIset = None
+    staticOAI = False
+    
+    def __init__(self,sourceNamespace,setNamespace,opts):
+        Utils.validateRequired(opts,['OAISource','OAIMetaDataPrefix'])
+        try:
+            super().__init__(sourceNamespace,setNamespace,opts)
+        except Exception as e:
+            raise Exception("Could not start RSLoader. " + str(e))
+        try:
+            Utils.checkURI(str(self.OAISource) + "?verb=Identify")
+        except Exception as e:
+            raise ValueError("OAISource url did not validate. " + str(e))
+        return None
+  
     def run(self):
-        if self.static:
-            records = self.pullStaticOAI(self.OAIUrl)
-
-    def pullStaticOAI(uri):
+        if self.staticOAI:
+            self.pullStaticOAI(self.OAISource)
+        else:
+            self.pullDynamicOAI()
+            
+    def pullStaticOAI(self,uri):
         data = getAsJSON(uri)
         records = data['records']['record']
-        return records
+        #TODO - iterate over static records
 
-    def getResumptionToken(result):
-        if 'oai:resumptionToken' not in result:
-            return False
+    def getResumptionToken(self,remainder):
+        #DEBUG
+        print(remainder)
+        exit()
         rToken = result['oai:resumptionToken']
         if isinstance(rToken, dict):
             return False
@@ -37,51 +60,55 @@ class OAILoader(RSLoader):
         return rToken
 
 
-    def pullDynamicOAI(uri, feedID, mdPrefix, setID=None):
-        url = str(uri) + "?verb=ListIdentifiers&metadataPrefix=" + str(mdPrefix)
-        if setID:
-            url = url + "&set=" + str(setID)
+    def pullDynamicOAI(self):
+        url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix)
+        if self.OAIset:
+            url = url + "&set=" + str(self.OAIset)
         while url:
-            print(url)
-            data = getAsJSON(url)
-            dataLD = jsonld(data)
-            if 'oai:OAI-PMH' not in dataLD:
-                print("Something went wrong.  No OAI-PMH node found.")
-                exit()
-            if 'oai:error' in dataLD['oai:OAI-PMH']:
-                print(dataLD['oai:OAI-PMH']['oai:error'])
-                exit()
-            if 'oai:ListIdentifiers' not in dataLD['oai:OAI-PMH']:
-                print("Something went wrong.  No ListIdentifiers node found!")
-                exit()
-            rToken = getResumptionToken(dataLD['oai:OAI-PMH']['oai:ListIdentifiers'])
+            data = Utils.getContent(url)
+            rawIDs = data.decode('UTF-8').split('<identifier>')
+            #first item is the header
+            del rawIDs[0]
+            records = []
+            for rawID in rawIDs:
+                parts = rawID.split('</identifier>')
+                records.append(parts[0])
+                remainder = parts[1]
+            for identifier in records:
+                try:
+                    resourceURL = str(self.OAISource) + "?identifier=" + str(identifier)
+                    self.addResource(resourceURL)
+                except Exception as e:
+                    #TODO should be logged
+                    print("Could not add resource. " + str(e))
+            rToken = self.getResumptionToken(remainder)
             if not rToken:
                 return True
             url = str(uri) + "?verb=ListIdentifiers"
             url = str(url) + "&resumptionToken=" + str(rToken)
             ids = dataLD['oai:OAI-PMH']['oai:ListIdentifiers']['oai:header']
-            for record in ids:
-                identifier = record['oai:identifier']
-                IDresult = addIdentifier(identifier,feedID)
-                if not IDresult:
-                    print("Could not add identifier for " . identifier)
-                print("Added " + identifier)
+            
 
 
-    def getAsJSON(url):
+    def getAsJSON(self,url):
         try:
             with urllib.request.urlopen(url) as response:
                 content = response.read()
         except:
-            print ('An error occurred retrieving JSON!')
-            return False
-        try:
-            result = bf.data(etree.fromstring(content))
-        except ValueError:
-            print("Could not parse XML. " + str(myResponse))
-            exit()
+            raise ValueError("Could not load OAI request: " + str(url))
+        result = bf.data(etree.fromstring(content))
         return result
 
 if __name__ == "__main__":
+    opts = {}
+    opts['OAISource'] = 'https://fraser.stlouisfed.org/oai'
+    opts['OAIMetaDataPrefix'] = 'mods'
+
+    try:
+        ol = OAILoader('frbstl','fraser',opts)
+        ol.run()
+    except:
+        e = sys.exc_info()[1]
+        print(str(e))
     print("main was found!")
     exit()
