@@ -1,10 +1,10 @@
 version: '2.1'
 services:
   resourcesync:
-    image: climatewalker/rsengine:1.0.2
+    image: climatewalker/rsengine:1.0.5
     volumes:
       - rs-vol1:/app/data
-      - rs-static:/app/app/static
+      - ${RS_PATH}:/app/static
     ports:
       - "81:80"
     environment:
@@ -23,4 +23,3 @@ services:
    
 volumes:
     rs-vol1:
-    rs-static: 
