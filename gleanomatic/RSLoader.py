@@ -1,10 +1,16 @@
 import os
-from datetime import datetime
-from configure import appConfig
-import RSRestClient as rc
-import Utils
 import json
-from GleanomaticErrors import BadResourceURL, RSPathException, TargetURIException
+from multiprocessing import Pool 
+from datetime import datetime
+import time
+
+from gleanomatic.configure import appConfig
+import gleanomatic.RSRestClient as rc
+import gleanomatic.Utils as Utils
+from gleanomatic.GleanomaticErrors import BadResourceURL, RSPathException, TargetURIException, AddDumpException
+import gleanomatic.gleanomaticLogger as gl
+
+logger = gl.logger
 
 # RSLoader - add external resources and capabilities to an ResourceSync endpoint
 
@@ -15,20 +21,15 @@ class RSLoader:
     targetEndpoint = None
     sourceNamespace = None
     setNamespace = None
-    RSPath = None
     client = None
     createDump = False
     batchTag = None
+    addCount = 0
+    warnings = 0
 
-    def __init__(self,sourceNamespace,setNamespace,opts):
-        self.RSPath = appConfig.RSPath
-        if os.access(self.RSPath, os.W_OK) is not True:
-            raise RSPathException("RSPath not writable")
+    def __init__(self,sourceNamespace,setNamespace,opts={}):
+        logger.info("Initializing RSLoader")
         self.targetURI = appConfig.targetURI
-        try:
-            Utils.checkURI(str(self.targetURI) + "/resource" )
-        except Exception as e:
-            raise TargetURIException("TargetURI did not validate: " + str(self.targetURI) + "/resource" ,e)
         self.targetEndpoint = rc.RSRestClient(self.targetURI)
         self.sourceNamespace = sourceNamespace
         self.setNamespace = setNamespace
@@ -42,20 +43,56 @@ class RSLoader:
         pass
 
     def addResource(self,uri):
-        contents = self.targetEndpoint.addResource(uri,self.sourceNamespace,self.setNamespace)
-        result = json.loads(contents)
-        if self.createDump:
-            self.addToDump(uri,content,)
-
+        contents, message = self.targetEndpoint.addResource(uri,self.sourceNamespace,self.setNamespace,self.batchTag)
+        batchTag = Utils.getRecordAttr(contents,'batchTag')
+        if batchTag == self.batchTag:
+            self.addCount = self.addCount + 1
+        if message:
+            self.warnings = self.warnings + 1
+        return contents
+        
+    def addBatch(self, uris):
+        pool = Pool()
+        pool.map(self.addResource, uris)
+        pool.close() 
+        pool.join()
+        
     def deleteResource(self,uri):
         pass
 
-    def addCapability(self,uri):
-        pass
+    def addCapability(self,url,capType):
+        contents, message = self.targetEndpoint.addCapability(url,self.sourceNamespace,self.setNamespace,capType)
+        return contents
     
-    def addToDump(self,uri,content):
-        #set initial path
-        path = str(self.RSPath) + "/" + str(self.sourceNamespace) + "/" + str(self.setNamespace) + "/" + str(self.batchTag)
-        if not os.path.isdir(path):
-            os.makedirs( path, 777 )
+    def makeDump(self):
+        if self.createDump:
+            contents = self.targetEndpoint.addDump(self.batchTag,self.sourceNamespace,self.setNamespace)
+            #zipURI = json.loads(contents)
+            zipURI = contents
+            logger.info("zipURI: " + str(zipURI))
+            while True:
+                retries = 0
+                try:
+                    uriResponse = Utils.checkURI(zipURI)
+                except Exception as e:
+                    logger.info("Exception from checkURI: " + str(e))
+                    #allow up to 1 hour for zip creation - sleep 60 seconds and try 60 times
+                    time.sleep(60)
+                    retries = retries + 1
+                    if retries > 60:
+                        logger.critical("Too many retries waiting for " + str(zipURI))
+                        raise AddDumpException("Too many retries waiting for " + str(zipURI))
+                    continue
+                if uriResponse:
+                    logger.info("Found zipURI.")
+                    break
+            result = self.addCapability(zipURI,'dump')    
+            return result
+        return False
+        
+    def getSummary(self):
+        return str(self.addCount) + " new/updated records loaded. " + str(self.warnings) + " warnings. "
+
+if __name__ == "__main__":
+    logger.setLevel(logging.DEBUG)
 

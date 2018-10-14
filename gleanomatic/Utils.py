@@ -1,15 +1,29 @@
 # Common Utils
-import urllib.request
-import urllib.parse
-from GleanomaticErrors import URIException
+import urllib
+import certifi
+from urllib3 import PoolManager
+import json
+from gleanomatic.GleanomaticErrors import URIException, PostDataException
+from gleanomatic.configure import appConfig
+import gleanomatic.gleanomaticLogger as gl
+
+logger = gl.logger
+userAgent = appConfig.userAgent
+hdrs = {"User-Agent": userAgent}
+
+manager = PoolManager(cert_reqs='CERT_REQUIRED',ca_certs=certifi.where())
 
 def checkURI(uri):
+    response = None
     try:
-        with urllib.request.urlopen(uri) as response:
-            content = response.read()
+        response = manager.request('GET',uri,headers=hdrs)
+    except urllib.error.HTTPError as e:
+        raise URIException("HTTPError for uri: " + str(uri),e)
     except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as e:
         raise URIException(uri,e)
     finally:
+        if not response:
+            return False
         return True
 
 def validateRequired(opts,required):
@@ -18,11 +32,53 @@ def validateRequired(opts,required):
             raise ValueError(str(key) + " is required!")
     return True
 
+def postRSData(url,params):
+     response = None
+     try:
+         #data = urllib.parse.urlencode(params).encode("utf-8")
+         response = manager.request('POST',url,fields=params,headers=hdrs)
+     except ValueError as e:
+         ErrResp = Utils.getJSONFromResponse(e)
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(ErrResp))   
+     except urllib.error.HTTPError as e:
+         ErrResp = Utils.getJSONFromResponse(e)
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(ErrResp))   
+     except urllib.error.URLError as e:
+         ErrResp = Utils.getJSONFromResponse(e)
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(ErrResp))
+     if not response:
+         return False
+     return response
+
+def getEncoding(response):
+    encoding = 'utf-8'
+    contentType = response.info()['Content-Type']
+    if '=' in contentType:
+        encoding = contentType.split('=')[1]
+    return encoding
+
 def getContent(url):
+    response = None
     try:
-        with urllib.request.urlopen(url) as response:
-            content = response.read()
+        response = manager.request('GET',url,headers=hdrs)
     except:
         raise ValueError("Could not load content from url: " + str(url))
-    return content
+    if not response:
+        return False
+    encoding = getEncoding(response)
+    return response.data.decode(encoding)
+    
+def getJSONFromResponse(response):
+    encoding = getEncoding(response)
+    return json.loads(response.data.decode(encoding))
+    
+def getRecordAttr(record,attr_name):
+    if isinstance(record,dict):
+        if attr_name in record:
+            return record[attr_name]
+    try:
+        result = getattr(record,attr_name)
+    except AttributeError:
+        return None
+    return result
  

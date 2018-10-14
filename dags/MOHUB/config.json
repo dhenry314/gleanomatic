@@ -1,0 +1,13 @@
+{
+    "sources": {
+        "frbstl": {
+            "name":"Federal Reserve Bank of St. Louis",
+            "sets": {
+                "fraser": {
+                     "OAISource":"https://fraser.stlouisfed.org/oai",
+                     "OAIMetaDataPrefix":"mods"
+                }
+            }
+        }
+    }
+}

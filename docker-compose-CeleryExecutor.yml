@@ -22,10 +22,14 @@ services:
             - LOAD_EX=n
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
+            - LOG_DEST=${LOG_DEST}
+            - LOG_FILE=${LOG_FILE}
+            - LOG_LEVEL=${LOG_LEVEL}
+            - USER_AGENT=${USER_AGENT}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
-            - ${RS_PATH}:${RS_DEST}
+            - ${LOG_PATH}:${LOG_DEST}
         ports:
             - "8080:8080"
         command: webserver
@@ -43,10 +47,14 @@ services:
         environment:
             - EXECUTOR=Celery
             # - REDIS_PASSWORD=redispass
+            - LOG_DEST=${LOG_DEST}
+            - LOG_FILE=${LOG_FILE}
+            - LOG_LEVEL=${LOG_LEVEL}
+            - USER_AGENT=${USER_AGENT}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
-            - ${RS_PATH}:${RS_DEST}
+            - ${LOG_PATH}:${LOG_DEST}
         ports:
             - "5555:5555"
         command: flower
@@ -60,10 +68,14 @@ services:
             - LOAD_EX=n
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
+            - LOG_DEST=${LOG_DEST}
+            - LOG_FILE=${LOG_FILE}
+            - LOG_LEVEL=${LOG_LEVEL}
+            - USER_AGENT=${USER_AGENT}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
-            - ${RS_PATH}:${RS_DEST}
+            - ${LOG_PATH}:${LOG_DEST}
         command: scheduler
 
     worker:
@@ -74,8 +86,12 @@ services:
         environment:
             - FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
             - EXECUTOR=Celery
+            - LOG_DEST=${LOG_DEST}
+            - LOG_FILE=${LOG_FILE}
+            - LOG_LEVEL=${LOG_LEVEL}
+            - USER_AGENT=${USER_AGENT}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
-            - ${RS_PATH}:${RS_DEST}
+            - ${LOG_PATH}:${LOG_DEST}
         command: worker

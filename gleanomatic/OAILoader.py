@@ -1,13 +1,15 @@
 import sys
-from RSLoader import RSLoader
-import Utils
+import json
+import re
 import urllib.request
 import requests
 from requests.auth import HTTPBasicAuth
-import json
-from xmljson import badgerfish as bf
-from lxml import html
-from lxml import etree
+
+from gleanomatic.RSLoader import RSLoader
+import gleanomatic.Utils as Utils
+import gleanomatic.gleanomaticLogger as gl
+
+logger = gl.logger
 
 
 class OAILoader(RSLoader):
@@ -19,14 +21,18 @@ class OAILoader(RSLoader):
     staticOAI = False
     
     def __init__(self,sourceNamespace,setNamespace,opts):
+        logger.info("initializing OAILoader")
+        
         Utils.validateRequired(opts,['OAISource','OAIMetaDataPrefix'])
         try:
             super().__init__(sourceNamespace,setNamespace,opts)
         except Exception as e:
+            logger.critical("Could not start RSLoader. " + str(e))
             raise Exception("Could not start RSLoader. " + str(e))
         try:
             Utils.checkURI(str(self.OAISource) + "?verb=Identify")
         except Exception as e:
+            logger.critical("OAISource url did not validate. " + str(e))
             raise ValueError("OAISource url did not validate. " + str(e))
         return None
   
@@ -35,60 +41,59 @@ class OAILoader(RSLoader):
             self.pullStaticOAI(self.OAISource)
         else:
             self.pullDynamicOAI()
+        self.makeDump()
+        return True
             
     def pullStaticOAI(self,uri):
+        logger.info("Pulling static OAI from " + str(uri))
         data = getAsJSON(uri)
         records = data['records']['record']
         #TODO - iterate over static records
 
-    def getResumptionToken(self,remainder):
-        #DEBUG
-        print(remainder)
-        exit()
-        rToken = result['oai:resumptionToken']
-        if isinstance(rToken, dict):
+    def getResumptionToken(self,data):
+        result = re.findall("<resumptionToken(.*?)</resumptionToken>", data)
+        if len(result) == 0:
             return False
-        if isinstance(rToken, str):
-            return rToken
-        rToken = rToken.decode('utf-8')
-        if rToken.find("</"):
-            tParts = rToken.split("</")
-            tParts.pop()
-            uglyJunk = tParts.pop()
-            uParts = uglyJunk.split(">")
-            rToken = uParts.pop()
-        return rToken
-
+        if ">" in result[0]:
+            parts = result[0].split(">")
+            result = parts[1]
+        return result
+        
+    def getError(self,data):
+        result = re.findall("<error(.*?)</error>", data)
+        if len(result) == 0:
+            return False
+        if ">" in result[0]:
+            parts = result[0].split(">")
+            result = parts[1]
+        return result
 
     def pullDynamicOAI(self):
         url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix)
         if self.OAIset:
             url = url + "&set=" + str(self.OAIset)
         while url:
+            logger.info("Pulling dynamic OAI from "  + str(url));
             data = Utils.getContent(url)
+            OAIerror = self.getError(data.decode('UTF-8'))
+            if OAIerror:
+                logger.critical("Could not pull OAI records. Error: " + str(OAIerror))
+                raise ValueError("Could not pull OAI records. ERROR:  " + str(OAIerror))
             rawIDs = data.decode('UTF-8').split('<identifier>')
             #first item is the header
             del rawIDs[0]
             records = []
+            result = None
             for rawID in rawIDs:
                 parts = rawID.split('</identifier>')
-                records.append(parts[0])
-                remainder = parts[1]
-            for identifier in records:
-                try:
-                    resourceURL = str(self.OAISource) + "?identifier=" + str(identifier)
-                    self.addResource(resourceURL)
-                except Exception as e:
-                    #TODO should be logged
-                    print("Could not add resource. " + str(e))
-            rToken = self.getResumptionToken(remainder)
-            if not rToken:
-                return True
-            url = str(uri) + "?verb=ListIdentifiers"
-            url = str(url) + "&resumptionToken=" + str(rToken)
-            ids = dataLD['oai:OAI-PMH']['oai:ListIdentifiers']['oai:header']
-            
-
+                resourceURL = str(self.OAISource) + "?identifier=" + str(parts[0])
+                records.append(resourceURL)
+            self.addBatch(records)
+            rToken = self.getResumptionToken(data.decode('UTF-8'))
+            if rToken:
+                url = str(self.OAISource) + "?verb=ListIdentifiers&resumptionToken=" + str(rToken)
+            else:
+                url = None
 
     def getAsJSON(self,url):
         try:

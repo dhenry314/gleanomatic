@@ -1,10 +1,10 @@
 version: '2.1'
 services:
   resourcesync:
-    image: climatewalker/rsengine:1.0.5
+    image: climatewalker/rsengine:1.1.1
     volumes:
       - rs-vol1:/app/data
-      - ${RS_PATH}:/app/static
+      - rs-static:/app/static
     ports:
       - "81:80"
     environment:
@@ -15,11 +15,22 @@ services:
       - HASH_ALGORITHM=md5
       - RESOURCE_UNIT=1000
       - DATE_UNIT=day
+      - STATIC_FILES=/app/static/
+      - USER_AGENT=${USER_AGENT}
       - 'RUN=flask run --host=0.0.0.0 --port=80'
-  webservices:
-    build: ./webServices
+      
+  transformservices:
+    build: ./transformServices
+    volumes:
+      - ${LOG_PATH}:${LOG_DEST}
+    environment:
+      - LOG_DEST=${LOG_DEST}
+      - LOG_FILE=${LOG_FILE}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - USER_AGENT=${USER_AGENT}
     ports:
       - "82:80"
    
 volumes:
     rs-vol1:
+    rs-static:
