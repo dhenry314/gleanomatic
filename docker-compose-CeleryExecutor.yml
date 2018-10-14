@@ -31,7 +31,7 @@ services:
             - ${LIB_PATH}:${LIB_DEST}
             - ${LOG_PATH}:${LOG_DEST}
         ports:
-            - "8080:8080"
+            - "8888:8080"
         command: webserver
         healthcheck:
             test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
@@ -56,7 +56,7 @@ services:
             - ${LIB_PATH}:${LIB_DEST}
             - ${LOG_PATH}:${LOG_DEST}
         ports:
-            - "5555:5555"
+            - "5678:5555"
         command: flower
 
     scheduler:
