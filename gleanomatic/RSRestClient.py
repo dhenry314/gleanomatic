@@ -47,7 +47,6 @@ class RSRestClient:
         try:
             Utils.checkURI(uri)
         except URIException as e:
-            logger.warning("Resource uri did not validate. uri: " + str(uri))
             raise Exception("Resource uri did not validate. uri: " + str(uri))
         params = {'sourceNamespace' : sourceNamespace, 'setNamespace' : setNamespace, 'uri': uri}
         if batchTag:
@@ -55,17 +54,7 @@ class RSRestClient:
         try:
             response = Utils.postRSData(self.resourceURI,params)
         except Exception as e:
-            logger.critical("Could not add resource. resourceURI: " + str(self.resourceURI) + " ERROR: " + str(e))
-            raise BadResourceURL("Could not add resource. resourceURI: " + str(self.resourceURI) + " ERROR: " + str(e))
-        """
-        try:
-            data = urllib.parse.urlencode(params).encode("utf-8")
-            req = urllib.request.Request(self.resourceURI, data=data)
-            response = urllib.request.urlopen(req)
-        except Exception as e:
-            logger.critical("Could not add resource. resourceURI: " + str(self.resourceURI) + " ERROR: " + str(e))
-            raise BadResourceURL(str(e))
-        """
+            raise BadResourceURL("Could not add resource. resourceURI: " + str(self.resourceURI), e)
         record = Utils.getJSONFromResponse(response)
         message = self.getMessage(record) 
         if message:
@@ -78,9 +67,7 @@ class RSRestClient:
         try:
             response = Utils.postRSData(self.capabilityURI,params)
         except Exception as e:
-            ErrResp = Utils.getJSONFromResponse(e)
-            logger.critical(ErrResp)
-            raise AddDumpException("CapabilityURI: " + str(self.capabilityURI) + " ERROR: " + str(ErrResp))
+            raise AddDumpException("Could not post dump.",e)
         d = Utils.getJSONFromResponse(response)
         d = self.convertToRSDomain(d)
         return d
@@ -114,7 +101,15 @@ class RSRestClient:
         if not urlCheck:
             return False
         f = urllib.request.urlopen(url)
-        contents = f.read().decode('utf-8')
+        contents = Utils.getContent(url)
+        return contents
+        
+    def getManifest(self,batchTag,sourceNamespace,setNamespace):
+        url = self.endpointURI + "/static/" + str(sourceNamespace) + "/" + str(setNamespace) + "/" + str(batchTag) + "/manifest"
+        urlCheck = Utils.checkURI(url)
+        if not urlCheck:
+            return False
+        contents = Utils.getContent(url)
         return contents
 
     def addCapability(self,capURL,sourceNamespace,setNamespace,capType):

@@ -35,17 +35,13 @@ def validateRequired(opts,required):
 def postRSData(url,params):
      response = None
      try:
-         #data = urllib.parse.urlencode(params).encode("utf-8")
-         response = manager.request('POST',url,fields=params,headers=hdrs)
+         response = manager.request('POST',url,fields=params,headers=hdrs,timeout=4.0)
      except ValueError as e:
-         ErrResp = Utils.getJSONFromResponse(e)
-         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(ErrResp))   
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))   
      except urllib.error.HTTPError as e:
-         ErrResp = Utils.getJSONFromResponse(e)
-         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(ErrResp))   
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))   
      except urllib.error.URLError as e:
-         ErrResp = Utils.getJSONFromResponse(e)
-         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(ErrResp))
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))
      if not response:
          return False
      return response

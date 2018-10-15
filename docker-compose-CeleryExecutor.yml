@@ -10,6 +10,10 @@ services:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflow
             - POSTGRES_DB=airflow
+        # Uncomment these lines to persist data on the local filesystem.
+        #     - PGDATA=/var/lib/postgresql/data/pgdata
+        # volumes:
+        #     - ./pgdata:/var/lib/postgresql/data/pgdata
 
     webserver:
         build: .
@@ -30,8 +34,9 @@ services:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
             - ${LOG_PATH}:${LOG_DEST}
+            - ${RS_PATH}:${RS_DEST}
         ports:
-            - "8888:8080"
+            - "8080:8080"
         command: webserver
         healthcheck:
             test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
@@ -40,7 +45,7 @@ services:
             retries: 3
 
     flower:
-        image: gleanomatic_core
+        image: gleanomatic_core 
         restart: always
         depends_on:
             - redis
@@ -55,8 +60,9 @@ services:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
             - ${LOG_PATH}:${LOG_DEST}
+            - ${RS_PATH}:${RS_DEST}
         ports:
-            - "5678:5555"
+            - "5555:5555"
         command: flower
 
     scheduler:
@@ -76,10 +82,11 @@ services:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
             - ${LOG_PATH}:${LOG_DEST}
+            - ${RS_PATH}:${RS_DEST}
         command: scheduler
 
     worker:
-        image: gleanomatic_core
+        image: gleanomatic_core 
         restart: always
         depends_on:
             - scheduler
@@ -94,4 +101,5 @@ services:
             - ${DAGS_PATH}:${DAGS_DEST}
             - ${LIB_PATH}:${LIB_DEST}
             - ${LOG_PATH}:${LOG_DEST}
+            - ${RS_PATH}:${RS_DEST}
         command: worker

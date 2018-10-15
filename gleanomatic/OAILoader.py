@@ -27,12 +27,12 @@ class OAILoader(RSLoader):
         try:
             super().__init__(sourceNamespace,setNamespace,opts)
         except Exception as e:
-            logger.critical("Could not start RSLoader. " + str(e))
+            logger.critical(self.msg("Could not start RSLoader. " + str(e)))
             raise Exception("Could not start RSLoader. " + str(e))
         try:
             Utils.checkURI(str(self.OAISource) + "?verb=Identify")
         except Exception as e:
-            logger.critical("OAISource url did not validate. " + str(e))
+            logger.critical(self.msg("OAISource url did not validate. " + str(e)))
             raise ValueError("OAISource url did not validate. " + str(e))
         return None
   
@@ -75,21 +75,21 @@ class OAILoader(RSLoader):
         while url:
             logger.info("Pulling dynamic OAI from "  + str(url));
             data = Utils.getContent(url)
-            OAIerror = self.getError(data.decode('UTF-8'))
+            OAIerror = self.getError(data)
             if OAIerror:
-                logger.critical("Could not pull OAI records. Error: " + str(OAIerror))
+                logger.critical(self.msg("Could not pull OAI records. Error: " + str(OAIerror)))
                 raise ValueError("Could not pull OAI records. ERROR:  " + str(OAIerror))
-            rawIDs = data.decode('UTF-8').split('<identifier>')
+            rawIDs = data.split('<identifier>')
             #first item is the header
             del rawIDs[0]
             records = []
             result = None
             for rawID in rawIDs:
                 parts = rawID.split('</identifier>')
-                resourceURL = str(self.OAISource) + "?identifier=" + str(parts[0])
+                resourceURL = str(self.OAISource) + "?verb=GetRecord&metadataPrefix=" + str(self.OAIMetaDataPrefix) + "&identifier=" + str(parts[0])
                 records.append(resourceURL)
             self.addBatch(records)
-            rToken = self.getResumptionToken(data.decode('UTF-8'))
+            rToken = self.getResumptionToken(data)
             if rToken:
                 url = str(self.OAISource) + "?verb=ListIdentifiers&resumptionToken=" + str(rToken)
             else:
@@ -105,15 +105,4 @@ class OAILoader(RSLoader):
         return result
 
 if __name__ == "__main__":
-    opts = {}
-    opts['OAISource'] = 'https://fraser.stlouisfed.org/oai'
-    opts['OAIMetaDataPrefix'] = 'mods'
-
-    try:
-        ol = OAILoader('frbstl','fraser',opts)
-        ol.run()
-    except:
-        e = sys.exc_info()[1]
-        print(str(e))
-    print("main was found!")
-    exit()
+    pass

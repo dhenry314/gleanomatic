@@ -31,5 +31,14 @@ sources = {
                      "OAIMetaDataPrefix":"mods"
                 }
             }
+        },
+        "umkc": {
+            "name": "University of Missouri- Kansas City",
+            "sets": {
+                "dl": {
+					"OAISource":"http://dl.mospace.umsystem.edu/umkc/oai2",
+					"OAIMetaDataPrefix":"mods"
+                }
+            }
         }
 }

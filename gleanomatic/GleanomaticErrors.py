@@ -25,4 +25,6 @@ class AddResourceError(Exception):
 class AddDumpException(Exception):
     pass
 
+class AddCapabilityException(Exception):
+    pass
 

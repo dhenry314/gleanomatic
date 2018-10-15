@@ -1,8 +1,6 @@
-from dotenv import load_dotenv, find_dotenv
-load_dotenv(find_dotenv())
 import gleanomatic.Utils as Utils
 
-content = Utils.getContent("http://climate-walker.org")
+content = Utils.getContent("http://localhost:8080/admin")
 
 print(content)
 
