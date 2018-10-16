@@ -8,7 +8,8 @@ from services import test
 
 class HelloWorld(Resource):
     def get(self):
-        return {'hello': 'world'}
+        return {'Ola': 'mondo'}
+
 
 api.add_resource(HelloWorld, '/')
 

@@ -9,7 +9,12 @@ docker build -t gleanomatic_core .
 Then run this
 ```
   ./gleanomatic.sh start
-```
+```  
+
+## Deploy with a custom project
+This repository comes with example project directories 'dags' and 'transformServices'.  To deploy Gleanomatic, you need to develop your own 'dags' and 'transforServices' directories.
+For example, to get started you could create a new project direct outside of gleanomatic called 'myProject'.  Copy gleanomatic/dags and gleanomatic/transformServices into 'myProject'.  
+Finally, in the .env file, change TRANSFORM_PATH and DAGS_PATH to those directories inside myProject.
 
 ## Named volume backup
 

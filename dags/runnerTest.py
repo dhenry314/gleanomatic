@@ -9,13 +9,13 @@ dag = DAG('runner_test', description='Runner Test',
 
 task1 = BashOperator(
         task_id='myTest',
-        bash_command='/bin/bash MOHUB/runner.sh oaiIngest frbstl:fraser',
+        bash_command='/bin/bash myProject/runner.sh oaiIngest frbstl:fraser',
         dag=dag
 )
      
 task2= BashOperator(
         task_id='myTest2',
-        bash_command='/bin/bash MOHUB/runner.sh oaiIngest umkc:dl',
+        bash_command='/bin/bash myProject/runner.sh oaiIngest umkc:dl',
         dag=dag
 )
 
