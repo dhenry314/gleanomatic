@@ -1,7 +1,7 @@
 version: '2.1'
 services:
   resourcesync:
-    image: climatewalker/rsengine:1.1.2
+    image: climatewalker/rsengine:1.1.3
     volumes:
       - rs-vol1:/app/data
       - rs-static:/app/static
@@ -28,6 +28,7 @@ services:
       - LOG_DEST=${LOG_DEST}
       - LOG_FILE=${LOG_FILE}
       - LOG_LEVEL=${LOG_LEVEL}
+      - LOG_URL=${LOG_URL}
       - USER_AGENT=${USER_AGENT}
     ports:
       - "82:80"

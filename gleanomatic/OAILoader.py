@@ -7,9 +7,6 @@ from requests.auth import HTTPBasicAuth
 
 from gleanomatic.RSLoader import RSLoader
 import gleanomatic.Utils as Utils
-import gleanomatic.gleanomaticLogger as gl
-
-logger = gl.logger
 
 
 class OAILoader(RSLoader):
@@ -21,18 +18,16 @@ class OAILoader(RSLoader):
     staticOAI = False
     
     def __init__(self,sourceNamespace,setNamespace,opts):
-        logger.info("initializing OAILoader")
-        
-        Utils.validateRequired(opts,['OAISource','OAIMetaDataPrefix'])
         try:
             super().__init__(sourceNamespace,setNamespace,opts)
         except Exception as e:
-            logger.critical(self.msg("Could not start RSLoader. " + str(e)))
-            raise Exception("Could not start RSLoader. " + str(e))
+            raise Exception("Could not start RSLoader. " + str(e))       
+        self.logger.info("initializing OAILoader")
+        Utils.validateRequired(opts,['OAISource','OAIMetaDataPrefix'])
         try:
             Utils.checkURI(str(self.OAISource) + "?verb=Identify")
         except Exception as e:
-            logger.critical(self.msg("OAISource url did not validate. " + str(e)))
+            self.logger.critical(self.msg("OAISource url did not validate. " + str(e)))
             raise ValueError("OAISource url did not validate. " + str(e))
         return None
   
@@ -45,7 +40,7 @@ class OAILoader(RSLoader):
         return True
             
     def pullStaticOAI(self,uri):
-        logger.info("Pulling static OAI from " + str(uri))
+        self.logger.info("Pulling static OAI from " + str(uri))
         data = getAsJSON(uri)
         records = data['records']['record']
         #TODO - iterate over static records
@@ -77,7 +72,7 @@ class OAILoader(RSLoader):
             data = Utils.getContent(url)
             OAIerror = self.getError(data)
             if OAIerror:
-                logger.critical(self.msg("Could not pull OAI records. Error: " + str(OAIerror)))
+                self.logger.critical(self.msg("Could not pull OAI records. Error: " + str(OAIerror)))
                 raise ValueError("Could not pull OAI records. ERROR:  " + str(OAIerror))
             rawIDs = data.split('<identifier>')
             #first item is the header

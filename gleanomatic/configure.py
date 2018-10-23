@@ -8,4 +8,5 @@ class appConfig:
     logDir = os.environ['LOG_DEST']
     logFile = os.environ['LOG_FILE']
     logLevel = os.environ['LOG_LEVEL']
+    logURL = os.environ['LOG_URL']
     userAgent = os.environ['USER_AGENT']

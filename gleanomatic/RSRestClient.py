@@ -5,28 +5,27 @@ import json
 
 import gleanomatic.Utils as Utils
 from gleanomatic.GleanomaticErrors import BadResourceURL, AddResourceError, AddDumpException
-import gleanomatic.gleanomaticLogger as gl
-
-logger = gl.logger
 
 class RSRestClient:
 
     endpointURI = None
     resourceURI = None
-    capabilityURI = None 
+    capabilityURI = None
+    logger = None 
 
-    def __init__(self,endpointURI):
-        logger.info("Initializing RSRestClient")
+    def __init__(self,endpointURI,logger):
+        self.logger = logger
+        self.logger.info("Initializing RSRestClient")
         #ensure that there is a trailing slash on the endpoint
         if endpointURI[-1] != "/":
             endpointURI = str(endpointURI) + "/" 
         self.endpointURI = endpointURI
         self.resourceURI = str(self.endpointURI) + "resource"
-        logger.info("Checking resourceURI: " + str(self.resourceURI))
+        self.logger.info("Checking resourceURI: " + str(self.resourceURI))
         try:
             Utils.checkURI(self.resourceURI)
         except Exception as e:
-            logger.critical("ResourceURI did not validate: " + str(self.resourceURI) + " ERROR:" + str(e))
+            self.logger.critical("ResourceURI did not validate: " + str(self.resourceURI) + " ERROR:" + str(e))
             raise TargetURIException("ResourceURI did not validate: " + str(self.resourceURI) ,e)
         self.capabilityURI = str(self.endpointURI) + "capability"
 
@@ -41,7 +40,7 @@ class RSRestClient:
         return None
    
     def addResource(self,uri,sourceNamespace,setNamespace,batchTag=None):
-        logger.info("Adding resource with uri: " + str(uri))
+        self.logger.info("Adding resource with uri: " + str(uri))
         record = None
         message = None
         try:
@@ -58,7 +57,7 @@ class RSRestClient:
         record = Utils.getJSONFromResponse(response)
         message = self.getMessage(record) 
         if message:
-            logger.warning(message)
+            self.logger.warning(message)
         return record, message
         
     def addDump(self,batchTag,sourceNamespace,setNamespace):
@@ -79,18 +78,9 @@ class RSRestClient:
         return url
         
     def deleteResource(self,uri):
-        headers = {
-            'Content-Type': 'application/json;charset=UTF-8'
-        }
-        try:
-            req = urllib.request.Request(
-                uri,
-                headers=headers,
-                method='DELETE'
-            )
-            response = urllib.request.urlopen(req)
-        except urllib.error.URLError as e:
-            raise BadResourceURL(uri,e)
+        response = Utils.deleteContent(uri)
+        if not response:
+            raise Exception("Could not delete resource at " + str(uri))
         d = response.read()
         return d
 
@@ -113,24 +103,24 @@ class RSRestClient:
         return contents
 
     def addCapability(self,capURL,sourceNamespace,setNamespace,capType):
-        logger.info("Adding capability with url:" + str(capURL))
+        self.logger.info("Adding capability with url:" + str(capURL))
         record = None
         message = None
         try:
             Utils.checkURI(capURL)
         except Exception as e:
-            logger.warning("Capability URL did not validate. url: " + str(capURL) + " ERROR: "  + str(e))
+            self.logger.warning("Capability URL did not validate. url: " + str(capURL) + " ERROR: "  + str(e))
             raise Exception("Capability URL did not validate. url: " + str(capURL) + " ERROR: "  + str(e))
         params = {'sourceNamespace' : sourceNamespace, 'setNamespace' : setNamespace, 'uri': capURL, 'capabilityType':capType}
         try:
             response = Utils.postRSData(self.capabilityURI,params)
         except Exception as e:
-            logger.critical("Could not add capability. capabiltyURI: " + str(self.capabilityURI) + " ERROR: " + str(e))
+            self.logger.critical("Could not add capability. capabiltyURI: " + str(self.capabilityURI) + " ERROR: " + str(e))
             raise BadResourceURL(str(e))
         record = Utils.getJSONFromResponse(response)
         message = self.getMessage(record) 
         if message:
-            logger.warning(message)
+            self.logger.warning(message)
         return record, message
 
     def deleteCapability(self,capURL,sourceNamespace,setNamespace):

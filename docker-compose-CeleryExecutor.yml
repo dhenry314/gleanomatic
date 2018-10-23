@@ -29,6 +29,7 @@ services:
             - LOG_DEST=${LOG_DEST}
             - LOG_FILE=${LOG_FILE}
             - LOG_LEVEL=${LOG_LEVEL}
+            - LOG_URL=${LOG_URL}
             - USER_AGENT=${USER_AGENT}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
@@ -55,6 +56,7 @@ services:
             - LOG_DEST=${LOG_DEST}
             - LOG_FILE=${LOG_FILE}
             - LOG_LEVEL=${LOG_LEVEL}
+            - LOG_URL=${LOG_URL}
             - USER_AGENT=${USER_AGENT}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
@@ -77,6 +79,7 @@ services:
             - LOG_DEST=${LOG_DEST}
             - LOG_FILE=${LOG_FILE}
             - LOG_LEVEL=${LOG_LEVEL}
+            - LOG_URL=${LOG_URL}
             - USER_AGENT=${USER_AGENT}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}
@@ -96,6 +99,7 @@ services:
             - LOG_DEST=${LOG_DEST}
             - LOG_FILE=${LOG_FILE}
             - LOG_LEVEL=${LOG_LEVEL}
+            - LOG_URL=${LOG_URL}
             - USER_AGENT=${USER_AGENT}
         volumes:
             - ${DAGS_PATH}:${DAGS_DEST}

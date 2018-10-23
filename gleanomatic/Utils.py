@@ -5,9 +5,7 @@ from urllib3 import PoolManager
 import json
 from gleanomatic.GleanomaticErrors import URIException, PostDataException
 from gleanomatic.configure import appConfig
-import gleanomatic.gleanomaticLogger as gl
 
-logger = gl.logger
 userAgent = appConfig.userAgent
 hdrs = {"User-Agent": userAgent}
 
@@ -31,17 +29,40 @@ def validateRequired(opts,required):
         if key not in opts:
             raise ValueError(str(key) + " is required!")
     return True
+    
+def postToLog(log):
+    encoded_body = json.dumps(log)
+    response = None
+    response = manager.request('POST', appConfig.logURL,
+                 headers={'Content-Type': 'application/json'},
+                 body=encoded_body)
+    return True
+        
 
 def postRSData(url,params):
      response = None
      try:
-         response = manager.request('POST',url,fields=params,headers=hdrs,timeout=4.0)
+         response = manager.request('POST',url,fields=params,headers=hdrs,timeout=10.0)
      except ValueError as e:
          raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))   
      except urllib.error.HTTPError as e:
          raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))   
      except urllib.error.URLError as e:
          raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))
+     if not response:
+         return False
+     return response
+     
+def deleteContent(url):
+     response = None
+     try:
+         response = manager.request('DELETE',url,headers=hdrs,timeout=10.0)
+     except ValueError as e:
+         raise PostDataException("Could not delete url: " + str(url) + " ERROR: " + str(e))   
+     except urllib.error.HTTPError as e:
+         raise PostDataException("Could not delete url: " + str(url) + " ERROR: " + str(e))   
+     except urllib.error.URLError as e:
+         raise PostDataException("Could not delete url: " + str(url) + " ERROR: " + str(e))
      if not response:
          return False
      return response
