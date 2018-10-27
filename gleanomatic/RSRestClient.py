@@ -72,9 +72,10 @@ class RSRestClient:
         return d
  
     def convertToRSDomain(self,url):
-        if '/static/' in str(url):
-            parts = str(url).split('/static/')
-            url = 'http://resourcesync/static/' + parts[1]
+        if ('://localhost:' in str(url)) or ('://localhost/' in str(url)):
+            parts = str(url).split('/')
+            subURL = '/'.join(parts[3:])
+            url = 'http://resourcesync/' + str(subURL)
         return url
         
     def deleteResource(self,uri):
@@ -122,7 +123,74 @@ class RSRestClient:
         if message:
             self.logger.warning(message)
         return record, message
+        
+    def loadResourceListIndex(self,sourceNamespace,setNamespace):
+        url = self.endpointURI + "/RS/" + str(sourceNamespace) + "/" + str(setNamespace) + "/resourcelistindex.json"
+        urlCheck = Utils.checkURI(url)
+        if not urlCheck:
+            return False
+        response = Utils.getResponse(url)
+        data = Utils.getJSONFromResponse(response)
+        urls = []
+        if 'sitemapindex' in data:
+            if 'sitemap' in data['sitemapindex']:
+                sitemap = data['sitemapindex']['sitemap']
+                for record in sitemap:
+                    if 'rs:ln' in record:
+                        if '@type' in record['rs:ln']:
+                            if str(record['rs:ln']['@type']).lower() == 'application/json':
+                                urls.append(record['rs:ln']['@href'])
+        return urls
 
+    #return a list of resource IDs from a given resourcelist url
+    def loadResourceListIDs(self,url):
+        url = self.convertToRSDomain(url)
+        urlCheck = Utils.checkURI(url)
+        if not urlCheck:
+            return False
+        response = Utils.getResponse(url)
+        data = Utils.getJSONFromResponse(response)
+        ids = []
+        if 'urlset' in data:
+            if 'url' in data['urlset']:
+                urls = data['urlset']['url']
+                for record in urls:
+                    if 'rs:ln' in record:
+                        if 'rel' in record['rs:ln']:
+                            if str(record['rs:ln']['rel']).lower() == 'describedby':
+                                resourceID = record['rs:ln']['href']
+                                resourceID = resourceID.replace('/resource/','')
+                                ids.append(resourceID)
+        return ids
+        
+    def loadCapabilityList(self,sourceNamespace,setNamespace):
+        url = self.endpointURI + "/RS/" + str(sourceNamespace) + "/" + str(setNamespace) + "/capabilitylist.json"
+        urlCheck = Utils.checkURI(url)
+        if not urlCheck:
+            return False
+        response = Utils.getResponse(url)
+        data = Utils.getJSONFromResponse(response)
+        if 'urlset' in data:
+            if 'url' in data['urlset']:
+                return data['urlset']['url']
+        return []
+
+    def loadManifestIDs(self,sourceNamespace,setNamespace,batchTag):
+        url = self.endpointURI + "/static/" + str(sourceNamespace) + "/" + str(setNamespace) + "/" + str(batchTag) + "/manifest"
+        urlCheck = Utils.checkURI(url)
+        if not urlCheck:
+            return False
+        ids = []
+        contents = Utils.getContent(url)
+        lines = contents.split("\n")
+        for line in lines:
+            parts = line.split('><')
+            resourceID = parts[-1]
+            resourceID = resourceID.replace('/resource/','')
+            resourceID = resourceID.replace('>','')
+            ids.append(resourceID)
+        return ids
+        
     def deleteCapability(self,capURL,sourceNamespace,setNamespace):
         pass
 

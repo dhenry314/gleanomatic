@@ -1,6 +1,11 @@
 import gleanomatic.Utils as Utils
+from gleanomatic.configure import appConfig
 
-content = Utils.getContent("http://localhost:8080/admin")
+#log = { "LEVEL": "WARN", "MSG": "This is a new message" }
+
+#content = Utils.postToLog(log)
+
+content = Utils.getContent("http://resourcesync/resource")
 
 print(content)
 

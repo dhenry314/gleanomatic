@@ -4,6 +4,7 @@ import urllib.request
 class appConfig:
     RSPath = "/home/dhenry/Dev/RSEngine/app/app/static/"
     targetURI = "http://resourcesync"
+    transformURI = os.environ['TRANSFORM_URI']
     createDump = True
     logDir = os.environ['LOG_DEST']
     logFile = os.environ['LOG_FILE']

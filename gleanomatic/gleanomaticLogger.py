@@ -3,7 +3,7 @@ import logging, sys
 from gleanomatic.configure import appConfig
 from gleanomatic import Utils
 
-class gleanomaticLogger(Object):
+class gleanomaticLogger():
     
     logger = None
     sourceNamespace = None
@@ -22,7 +22,7 @@ class gleanomaticLogger(Object):
         stream_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
         self.logger.addHandler(stream_handler)
-        logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.INFO)
         logLevel = str(appConfig.logLevel).lower()
 
         if logLevel is "critical":
@@ -46,7 +46,7 @@ class gleanomaticLogger(Object):
             "NAMESPACE": fullNamespace,
             "BATCHTAG": self.batchTag
         }
-        Utils.postLog(log)
+        Utils.postToLog(log)
 
     def notset(self,msg):
         if self.logger.isEnabledFor(logging.NOTSET):

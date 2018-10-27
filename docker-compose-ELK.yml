@@ -17,12 +17,11 @@ services:
     volumes:
       - esdata:/usr/share/elasticsearch/data
     ports:
-      - 9200:9200
+      - 9201:9200
       
   logstash:
     image: docker.elastic.co/logstash/logstash:6.4.2
-    #command: logstash -e 'input { stdin {  } http { port => 8080 } } filter { json { source => "message"  }} output { elasticsearch { hosts => [ 'elasticsearch' ] index => "elk-data-%{+YYYY.MM.dd}" } stdout { } }'
-    command: logstash -e 'input { stdin {  } udp { port => 8080 } tcp { port => 8080 } } filter { json { source => "message"  }} output { elasticsearch { hosts => [ 'elasticsearch' ] index => "elk-data-%{+YYYY.MM.dd}" } stdout { } }'
+    command: logstash -e 'input { stdin {  } http { port => 8080 } } filter { json { source => "message"  }} output { elasticsearch { hosts => [ "elasticsearch" ] index => "elk-data-%{+YYYY.MM.dd}" } stdout { } }'
     ports:
       - "8181:8080"
 

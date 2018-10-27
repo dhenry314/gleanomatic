@@ -1,6 +1,6 @@
 import os
 import json
-from multiprocessing import Pool 
+from multiprocessing import Pool, cpu_count
 from datetime import datetime
 import time
 
@@ -9,6 +9,34 @@ import gleanomatic.RSRestClient as rc
 import gleanomatic.Utils as Utils
 from gleanomatic.GleanomaticErrors import BadResourceURL, RSPathException, TargetURIException, AddDumpException, AddCapabilityException
 import gleanomatic.gleanomaticLogger as gl
+
+def addFromBatch(datum):
+    parts = datum.split("||")
+    params = {'uri': parts[0], 'sourceNamespace' : parts[1], 'setNamespace' : parts[2], 'batchTag': parts[3]}
+    resourceURI = str(appConfig.targetURI) + "/resource"
+    namespace = str(parts[1]) + "/" + str(parts[2])
+    response = Utils.postRSData(resourceURI,params)
+    respJ = Utils.getJSONFromResponse(response)
+    if not respJ:
+        print("Failed to post " + str(parts[0]))
+        Utils.postToLog({"LEVEL":"WARNING",
+                         "MSG": "Failed to post " + str(parts[0]), 
+                         "NAMESPACE": namespace,
+                         "BATCHTAG": str(parts[3])})
+        return True
+    if 'ID' in respJ:
+        print("Posted " + str(parts[0]))
+        Utils.postToLog({"LEVEL":"INFO",
+                         "MSG": "Posted " + str(parts[0]) + " to resource/" + str(respJ['ID']), 
+                         "NAMESPACE": namespace,
+                         "BATCHTAG": str(parts[3])})
+    else:
+        print("Failed to post " + str(parts[0]))
+        Utils.postToLog({"LEVEL":"WARNING",
+                         "MSG": "Failed to post " + str(parts[0]), 
+                         "NAMESPACE": namespace,
+                         "BATCHTAG": str(parts[3])})
+    return True
 
 # RSLoader - add external resources and capabilities to an ResourceSync endpoint
 
@@ -24,12 +52,11 @@ class RSLoader:
     logger = None
 
     def __init__(self,sourceNamespace,setNamespace,opts={}):
-        now = datetime.now()
-        self.batchTag = str(now.year)+str(now.month).zfill(2)+str(now.day).zfill(2)+str(now.hour).zfill(2)+str(now.minute).zfill(2)
+        self.batchTag = Utils.getCurrentBatchTimestamp()
         self.logger = gl.gleanomaticLogger(sourceNamespace,setNamespace,self.batchTag)
         self.logger.info("Initializing RSLoader")
         self.targetURI = appConfig.targetURI
-        self.targetEndpoint = rc.RSRestClient(self.targetURI)
+        self.targetEndpoint = rc.RSRestClient(self.targetURI,self.logger)
         self.sourceNamespace = sourceNamespace
         self.setNamespace = setNamespace
         self.createDump = appConfig.createDump
@@ -51,8 +78,12 @@ class RSLoader:
         return contents
         
     def addBatch(self, uris):
-        pool = Pool()
-        pool.map(self.addResource, uris)
+        data = []
+        for uri in uris:
+            data.append(str(uri) + "||" + str(self.sourceNamespace) + "||" + str(self.setNamespace) + "||" + str(self.batchTag))
+        psize = cpu_count()*1
+        pool = Pool(psize)
+        pool.map(addFromBatch,data)
         pool.close() 
         pool.join()
         

@@ -68,8 +68,12 @@ class OAILoader(RSLoader):
         if self.OAIset:
             url = url + "&set=" + str(self.OAIset)
         while url:
-            logger.info("Pulling dynamic OAI from "  + str(url));
-            data = Utils.getContent(url)
+            self.logger.info("Pulling dynamic OAI from "  + str(url))
+            try:
+                data = Utils.getContent(url)
+            except Exception as e:
+                self.logger.warning("Could not get content from " + str(url))
+                continue
             OAIerror = self.getError(data)
             if OAIerror:
                 self.logger.critical(self.msg("Could not pull OAI records. Error: " + str(OAIerror)))

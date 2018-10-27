@@ -1,7 +1,7 @@
 version: '2.1'
 services:
   resourcesync:
-    image: climatewalker/rsengine:1.1.3
+    image: climatewalker/rsengine:1.1.5
     volumes:
       - rs-vol1:/app/data
       - rs-static:/app/static
@@ -18,6 +18,8 @@ services:
       - STATIC_FILES=/app/static/
       - USER_AGENT=${USER_AGENT}
       - 'RUN=flask run --host=0.0.0.0 --port=80'
+    networks:
+      - gleanomatic
       
   transformservices:
     build: ${TRANSFORM_PATH}
@@ -32,7 +34,55 @@ services:
       - USER_AGENT=${USER_AGENT}
     ports:
       - "82:80"
+    networks:
+      - gleanomatic
+      
+  elasticsearch:
+    image: elasticsearch:2.4.1
+    hostname: elasticsearch
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=127.0.0.1
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms${ES_JVM_HEAP} -Xmx${ES_JVM_HEAP}"
+    mem_limit: ${ES_MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - 9201:9200
+    networks:
+      - gleanomatic
+      
+  logstash:
+    image: docker.elastic.co/logstash/logstash:6.4.2
+    hostname: logstash
+    command: logstash -e 'input { stdin {  } http { port => 8080 } } filter { json { source => "message"  }} output { elasticsearch { hosts => [ "elasticsearch" ] index => "elk-data-%{+YYYY.MM.dd}" } stdout { } }'
+    ports:
+      - "8181:8080"
+    networks:
+      - gleanomatic
+
+  kibana:
+    image: kibana:4.5.1
+    hostname: kibana
+    depends_on:
+      - elasticsearch
+      - logstash
+    ports:
+      - 5601:5601
+    networks:
+      - gleanomatic
    
 volumes:
     rs-vol1:
     rs-static:
+    esdata:
+      driver: local
+
+networks:
+    gleanomatic:
+        driver: bridge
