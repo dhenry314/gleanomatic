@@ -14,7 +14,7 @@ class OAILoader(RSLoader):
     OAISource = None
     OAIMetaDataPrefix = None
     setNamespace = None
-    OAIset = None
+    OAISets = None
     staticOAI = False
     
     def __init__(self,sourceNamespace,setNamespace,opts):
@@ -62,17 +62,23 @@ class OAILoader(RSLoader):
             parts = result[0].split(">")
             result = parts[1]
         return result
-
+        
     def pullDynamicOAI(self):
         url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix)
-        if self.OAIset:
-            url = url + "&set=" + str(self.OAIset)
+        if self.OAISets:
+            for setSpec in self.OAISets:
+                url = url + "&set=" + str(setSpec)
+                self.pullDynamicOAIByURL(url)
+        else:
+            self.pullDynamicOAIByURL(url)
+            
+    def pullDynamicOAIByURL(self,url):
         while url:
             self.logger.info("Pulling dynamic OAI from "  + str(url))
             try:
                 data = Utils.getContent(url)
             except Exception as e:
-                self.logger.warning("Could not get content from " + str(url))
+                self.logger.warning("Could not get content from " + str(url) + " ERROR: " + str(e))
                 continue
             OAIerror = self.getError(data)
             if OAIerror:
