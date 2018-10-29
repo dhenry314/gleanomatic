@@ -64,12 +64,12 @@ class OAILoader(RSLoader):
         return result
         
     def pullDynamicOAI(self):
-        url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix)
         if self.OAISets:
             for setSpec in self.OAISets:
-                url = url + "&set=" + str(setSpec)
+                url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix) + "&set=" + str(setSpec)
                 self.pullDynamicOAIByURL(url)
         else:
+            url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix)
             self.pullDynamicOAIByURL(url)
             
     def pullDynamicOAIByURL(self,url):
@@ -82,7 +82,7 @@ class OAILoader(RSLoader):
                 continue
             OAIerror = self.getError(data)
             if OAIerror:
-                self.logger.critical(self.msg("Could not pull OAI records. Error: " + str(OAIerror)))
+                self.logger.critical("Could not pull OAI records. Error: " + str(OAIerror))
                 raise ValueError("Could not pull OAI records. ERROR:  " + str(OAIerror))
             rawIDs = data.split('<identifier>')
             #first item is the header
