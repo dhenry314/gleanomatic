@@ -31,6 +31,7 @@ services:
       - LOG_FILE=${LOG_FILE}
       - LOG_LEVEL=${LOG_LEVEL}
       - LOG_URL=${LOG_URL}
+      - TRANSFORM_URI=${TRANSFORM_URI}
       - USER_AGENT=${USER_AGENT}
     ports:
       - "82:80"
