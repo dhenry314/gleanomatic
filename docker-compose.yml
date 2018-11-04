@@ -1,7 +1,7 @@
 version: '2.1'
 services:
   resourcesync:
-    image: climatewalker/rsengine:1.1.7
+    image: climatewalker/rsengine:1.1.8
     volumes:
       - rs-vol1:/app/data
       - rs-static:/app/static
