@@ -5,7 +5,7 @@ import urllib.request
 import requests
 from requests.auth import HTTPBasicAuth
 
-from gleanomatic.RSLoader import RSLoader
+from gleanomatic.RSLoader import RSLoader,RSLoaderError
 import gleanomatic.Utils as Utils
 
 
@@ -18,17 +18,16 @@ class OAILoader(RSLoader):
     staticOAI = False
     
     def __init__(self,sourceNamespace,setNamespace,opts):
-        try:
-            super().__init__(sourceNamespace,setNamespace,opts)
-        except Exception as e:
-            raise Exception("Could not start RSLoader. " + str(e))       
+        super().__init__(sourceNamespace,setNamespace,opts)
         self.logger.info("initializing OAILoader")
-        Utils.validateRequired(opts,['OAISource','OAIMetaDataPrefix'])
+        try:
+            Utils.validateRequired(opts,['OAISource','OAIMetaDataPrefix'])
+        except ValueError as e:
+            raise RSLoaderError("Missing required parameter.",e,self.logger)
         try:
             Utils.checkURI(str(self.OAISource) + "?verb=Identify")
         except Exception as e:
-            self.logger.critical(self.msg("OAISource url did not validate. " + str(e)))
-            raise ValueError("OAISource url did not validate. " + str(e))
+            raise RSLoaderError("OAISource url did not validate. ", e,self.logger)
         return None
   
     def run(self):
@@ -41,9 +40,7 @@ class OAILoader(RSLoader):
             
     def pullStaticOAI(self,uri):
         self.logger.info("Pulling static OAI from " + str(uri))
-        data = getAsJSON(uri)
-        records = data['records']['record']
-        #TODO - iterate over static records
+        result = self.addResource(uri)
 
     def getResumptionToken(self,data):
         result = re.findall("<resumptionToken(.*?)</resumptionToken>", data)
@@ -64,12 +61,12 @@ class OAILoader(RSLoader):
         return result
         
     def pullDynamicOAI(self):
+        url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix)
         if self.OAISets:
             for setSpec in self.OAISets:
-                url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix) + "&set=" + str(setSpec)
+                url = url + "&set=" + str(setSpec)
                 self.pullDynamicOAIByURL(url)
         else:
-            url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix)
             self.pullDynamicOAIByURL(url)
             
     def pullDynamicOAIByURL(self,url):
@@ -82,8 +79,7 @@ class OAILoader(RSLoader):
                 continue
             OAIerror = self.getError(data)
             if OAIerror:
-                self.logger.critical("Could not pull OAI records. Error: " + str(OAIerror))
-                raise ValueError("Could not pull OAI records. ERROR:  " + str(OAIerror))
+                raise RSLoaderError("Could not pull OAI records. OAIError: " + str(OAIerror),None,self.logger)
             rawIDs = data.split('<identifier>')
             #first item is the header
             del rawIDs[0]
@@ -104,9 +100,12 @@ class OAILoader(RSLoader):
         try:
             with urllib.request.urlopen(url) as response:
                 content = response.read()
-        except:
-            raise ValueError("Could not load OAI request: " + str(url))
-        result = bf.data(etree.fromstring(content))
+        except Exception as e:
+            raise RSLoaderError("Could not load OAI request: " + str(url),e,self.logger)
+        try:
+            result = bf.data(etree.fromstring(content))
+        except Exception as e:
+            raise RSLoaderError("Could not get JSON from content: " + str(content),e,sef.logger)
         return result
 
 if __name__ == "__main__":

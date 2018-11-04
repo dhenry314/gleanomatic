@@ -7,8 +7,11 @@ import time
 from gleanomatic.configure import appConfig
 import gleanomatic.RSRestClient as rc
 import gleanomatic.Utils as Utils
-from gleanomatic.GleanomaticErrors import BadResourceURL, RSPathException, TargetURIException, AddDumpException, AddCapabilityException
+from gleanomatic.GleanomaticErrors import GleanomaticError,PostDataException,BadResourceURL, RSPathException, TargetURIException, AddDumpException, AddCapabilityException
 import gleanomatic.gleanomaticLogger as gl
+
+class RSLoaderError(GleanomaticError):
+    pass
 
 def addFromBatch(datum):
     parts = datum.split("||")
@@ -72,7 +75,7 @@ class RSLoader:
         try:
             contents, message = self.targetEndpoint.addResource(uri,self.sourceNamespace,self.setNamespace,self.batchTag)
         except Exception as e:
-            self.logger.warning("Could not add resource uri: " + str(uri) + " ERROR: " + str(e))
+            raise PostDataException("Could not add resource uri: " + str(uri),e,self.logger)
         if not contents:
             self.logger.warning("No contents returned for uri: " + str(uri))
         return contents
@@ -95,8 +98,7 @@ class RSLoader:
         try:
             contents, message = self.targetEndpoint.addCapability(url,self.sourceNamespace,self.setNamespace,capType)
         except Exception as e:
-            self.logger.critical("Could not add capability.")
-            raise AddCapabilityException("Could not add capability",e)
+            raise AddCapabilityException("Could not add capability",e,self.logger)
         return contents
     
     def makeDump(self):
@@ -104,8 +106,7 @@ class RSLoader:
             try:
                 contents = self.targetEndpoint.addDump(self.batchTag,self.sourceNamespace,self.setNamespace)
             except Exception as e:
-                self.logger.critical("Could not add dump.")
-                raise AddDumpException("Could not add dump.",e)
+                raise AddDumpException("Could not add dump.",e,self.logger)
             zipURI = contents
             while True:
                 retries = 0
@@ -116,8 +117,7 @@ class RSLoader:
                     time.sleep(60)
                     retries = retries + 1
                     if retries > 60:
-                        self.logger.critical("Too many retries waiting for " + str(zipURI))
-                        raise AddDumpException("Too many retries waiting for " + str(zipURI))
+                        raise AddDumpException("Too many retries waiting for " + str(zipURI),e,self.logger)
                     continue
                 if uriResponse:
                     self.logger.info("Found zipURI.")
