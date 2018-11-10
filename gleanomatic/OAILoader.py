@@ -35,6 +35,7 @@ class OAILoader(RSLoader):
             self.pullStaticOAI(self.OAISource)
         else:
             self.pullDynamicOAI()
+        self.logger.info("Requesting dump file.")
         self.makeDump()
         return True
             

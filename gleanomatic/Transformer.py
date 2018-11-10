@@ -2,6 +2,7 @@ from gleanomatic.configure import appConfig
 from gleanomatic.RSReader import RSReader
 from gleanomatic.RSLoader import RSLoader
 import gleanomatic.Utils as Utils
+from gleanomatic.GleanomaticErrors import GleanomaticError,PostDataException,BadResourceURL, RSPathException, TargetURIException, AddDumpException, AddCapabilityException
 
 
 class Transformer():
@@ -30,18 +31,23 @@ class Transformer():
         self.logger.info("initializing Transformer")
   
     def run(self):
-        self.reader.loadIDs()
+        try:
+            self.reader.loadIDs()
+        except Exception as e:
+            raise GleanomaticError("Could not load IDs from reader.",e,self.logger) 
+        self.logger.info("Loaded " + str(len(self.reader.resourceIDs)) + " resourceIDs into reader.")
         offset = 0
-        while True:
+        while len(self.reader.resourceIDs) > offset:
+            self.logger.info("Offset: " + str(offset))
             #batch by 1000
             try:
-                batchIDs = self.reader.resourceIDs[offset:1000]
-            except IndexError as e:
-                break
+                batchIDs = self.reader.resourceIDs[offset:offset+1000]
+            except KeyError as e:
+                break;
             uris = map(lambda resID: str(self.transformURI) + str(self.transformName) + "/" + resID,batchIDs)
-            uris = list(uris)
             self.loader.addBatch(uris)
             offset = offset + 1000
+        self.logger.info("Requesting data dump.")
         self.loader.makeDump()
         return True
    

@@ -57,6 +57,7 @@ def postToLog(log):
 
 
 def postRSData(url,params):
+     print("Posting to RS with params: " + str(params))
      response = None
      try:
          response = manager.request('POST',url,fields=params,headers=hdrs,timeout=30)
@@ -83,6 +84,8 @@ def deleteContent(url):
          raise PostDataException("Could not delete url: " + str(url) + " ERROR: " + str(e))   
      except urllib.error.URLError as e:
          raise PostDataException("Could not delete url: " + str(url) + " ERROR: " + str(e))
+     except Exception as e:
+         raise PostDataException("Could not delete. ERROR: " + str(e))
      if not response:
          return False
      return response

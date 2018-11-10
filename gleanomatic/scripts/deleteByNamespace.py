@@ -33,6 +33,8 @@ for res in resList['sitemapindex']['sitemap']:
             if str(res['rs:ln']['@type']).lower() == 'application/json':
                 subResListURL = res['rs:ln']['@href']
                 subResListURL = subResListURL.replace(localhost,'http://resourcesync/')
+                #DEBUG
+                print(subResListURL)
                 subResContents = Utils.getContent(subResListURL)
                 subResList = json.loads(subResContents)
                 for url in subResList['urlset']['url']:
