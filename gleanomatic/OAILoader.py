@@ -65,8 +65,8 @@ class OAILoader(RSLoader):
         url = str(self.OAISource) + "?verb=ListIdentifiers&metadataPrefix=" + str(self.OAIMetaDataPrefix)
         if self.OAISets:
             for setSpec in self.OAISets:
-                url = url + "&set=" + str(setSpec)
-                self.pullDynamicOAIByURL(url)
+                subUrl = url + "&set=" + str(setSpec)
+                self.pullDynamicOAIByURL(subUrl)
         else:
             self.pullDynamicOAIByURL(url)
             
