@@ -37,7 +37,12 @@ class RESTLoader(RSLoader):
         while url:
             self.logger.info("Pulling REST records from "  + str(url))
             try:
-                data = Utils.getContent(url)
+                response = Utils.getResponse(url)
+            except Exception as e:
+                self.logger.warning("Could not get content from " + str(url) + " ERROR: " + str(e))
+                continue
+            try:
+                data = Utils.getJSONFromResponse(response)
             except Exception as e:
                 self.logger.warning("Could not get content from " + str(url) + " ERROR: " + str(e))
                 continue
@@ -54,7 +59,7 @@ class RESTLoader(RSLoader):
             url = self.getNextURL(offset,count)
 
     # may be overridden in subclass
-    def getNextURL(offset=None,count=None):
+    def getNextURL(self,offset=None,count=None):
         baseURL = str(self.RESTSource)
         if not offset:
             offset = self.defaultOffset
