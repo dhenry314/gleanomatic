@@ -13,7 +13,7 @@ import gleanomatic.gleanomaticLogger as gl
 class RSLoaderError(GleanomaticError):
     pass
 
-def addFromBatch(datum):
+def addFromBatch(datum,attempts=1):
     parts = datum.split("||")
     params = {'uri': parts[0], 'sourceNamespace' : parts[1], 'setNamespace' : parts[2], 'batchTag': parts[3]}
     resourceURI = str(appConfig.targetURI) + "/resource"
@@ -25,7 +25,8 @@ def addFromBatch(datum):
         Utils.postToLog({"LEVEL":"WARNING",
                          "MSG": "Failed to post " + str(parts[0]), 
                          "NAMESPACE": namespace,
-                         "BATCHTAG": str(parts[3])})
+                         "BATCHTAG": str(parts[3]),
+                         "RESP": respJ})
         return True
     if 'ID' in respJ:
         print("Posted " + str(parts[0]))
@@ -34,11 +35,18 @@ def addFromBatch(datum):
                          "NAMESPACE": namespace,
                          "BATCHTAG": str(parts[3])})
     else:
-        print("Failed to post " + str(parts[0]))
-        Utils.postToLog({"LEVEL":"WARNING",
+        if attempts > 3:
+            print("Failed to post " + str(parts[0]))
+            Utils.postToLog({"LEVEL":"WARNING",
                          "MSG": "Failed to post " + str(parts[0]), 
                          "NAMESPACE": namespace,
-                         "BATCHTAG": str(parts[3])})
+                         "BATCHTAG": str(parts[3]),
+                         "RESP": respJ})
+        else:
+            attempts = attempts + 1
+            time.sleep(3)
+            addFromBatch(datum,attempts)
+            
     return True
 
 # RSLoader - add external resources and capabilities to an ResourceSync endpoint
