@@ -1,8 +1,10 @@
 # Common Utils
 import urllib
+import time
 from datetime import datetime
 import certifi
 from urllib3 import PoolManager
+from urllib3 import exceptions as URLExceptions
 import json
 from xmltodict import parse
 from gleanomatic.GleanomaticErrors import URIException, PostDataException
@@ -56,7 +58,7 @@ def postToLog(log):
     return True
 
 
-def postRSData(url,params):
+def postRSData(url,params,attempts=1):
      print("Posting to RS with params: " + str(params))
      response = None
      try:
@@ -67,10 +69,19 @@ def postRSData(url,params):
          raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))   
      except urllib.error.URLError as e:
          raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))
+     except URLExceptions.ProtocolError:
+         pass
+     except URLExceptions.ReadTimeoutError:
+         pass
      except Exception as e:
-         print(str(e))
-         return True
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))
      if not response:
+         if attempts == 3:
+             raise PostDataException("Could not post data after 3 attempts for url: " + str(url))
+         else:
+             attempts = attempts + 1
+             time.sleep(3)
+             postRSData(url,params,attempts)         
          return True
      return response
      
