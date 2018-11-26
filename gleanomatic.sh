@@ -6,7 +6,8 @@ startme() {
     echo "Starting ...\n"
     echo "running docker-compose with docker-compose-$airflowType.yml\n\n"
     #docker-compose -f docker-compose.yml -f docker-compose-ELK.yml -f docker-compose-$airflowType.yml up -d
-    docker-compose -f docker-compose.yml -f docker-compose-$airflowType.yml up -d --scale resourcesync=2
+    #docker-compose -f docker-compose.yml -f docker-compose-$airflowType.yml up -d --scale resourcesync=2
+    docker-compose -f docker-compose.yml -f docker-compose-$airflowType.yml up -d 
 }
 
 stopme() {
