@@ -22,7 +22,7 @@ services:
     webserver:
         build: .
         image: gleanomatic_core
-        restart: always
+        #restart: always
         depends_on:
             - postgres
             - redis
@@ -54,7 +54,7 @@ services:
 
     flower:
         image: gleanomatic_core 
-        restart: always
+        #restart: always
         depends_on:
             - redis
         environment:
@@ -79,7 +79,7 @@ services:
 
     scheduler:
         image: gleanomatic_core
-        restart: always
+        #restart: always
         depends_on:
             - webserver
         environment:
@@ -103,7 +103,7 @@ services:
 
     worker:
         image: gleanomatic_core 
-        restart: always
+        #restart: always
         depends_on:
             - scheduler
         environment:
