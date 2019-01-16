@@ -36,6 +36,9 @@ services:
       - "82:80"
     networks:
       - gleanomatic
+    extra_hosts:
+      - ${HOST_SERVER}
+
       
   elasticsearch:
     image: elasticsearch:2.4.1
@@ -73,7 +76,7 @@ services:
       - elasticsearch
       - logstash
     ports:
-      - 5601:5601
+      - 81:5601
     networks:
       - gleanomatic
    

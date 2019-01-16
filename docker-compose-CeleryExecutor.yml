@@ -45,6 +45,8 @@ services:
             - "8282:8080"
         networks:
           - gleanomatic
+        extra_hosts:
+          - ${HOST_SERVER} 
         command: webserver
         healthcheck:
             test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
