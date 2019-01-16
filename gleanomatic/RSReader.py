@@ -79,6 +79,14 @@ class RSReader:
         self.currentIndexKey = self.currentIndexKey + 1
         return resourceIDs
 
+    def getResourceContent(self,resID):
+        url = self.targetURI + '/content/' + resID
+        try:
+            response = Utils.getResponse(url)
+            record = Utils.getJSONFromResponse(response)
+        except Exception as e:
+            raise BadResourceURL("Could not get data from url",e,self.logger)
+        return record
     
 
 if __name__ == "__main__":

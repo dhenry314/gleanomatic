@@ -5,6 +5,7 @@ from datetime import datetime
 import certifi
 from urllib3 import PoolManager
 from urllib3 import exceptions as URLExceptions
+from urllib3 import util as URLUtil
 import json
 from xmltodict import parse
 from gleanomatic.GleanomaticErrors import URIException, PostDataException
@@ -85,6 +86,49 @@ def postRSData(url,params,attempts=1):
          return True
      return response
      
+def postREST(url,data,posttype='params',auth=None,attempts=1):
+     print("Posting to " + url + " with data: " + str(data))
+     hdrs = None
+     params = None
+     encoded_body = None
+     if auth:
+         if 'basic' in auth:
+             auth_str = auth['basic']['username'] + ":" + auth['basic']['password']
+             hdrs = URLUtil.make_headers(basic_auth=auth_str)
+     if posttype == 'raw':
+         encoded_body = json.dumps(data)
+     elif posttype == 'params':
+         #params = urllib.parse.urlencode(data).encode('ascii')
+         params = data
+     response = None
+     try:
+         if encoded_body:
+             response = manager.request('POST',url,body=encoded_body,headers=hdrs,timeout=30)
+         elif params:
+             response = manager.request('POST',url,fields=params,headers=hdrs,timeout=30)
+     except ValueError as e:
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))   
+     except urllib.error.HTTPError as e:
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))   
+     except urllib.error.URLError as e:
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))
+     except URLExceptions.ProtocolError:
+         pass
+     except URLExceptions.ReadTimeoutError:
+         pass
+     except Exception as e:
+         raise PostDataException("Could not post data for url: " + str(url) + " ERROR: " + str(e))
+     if not response:
+         if attempts == 3:
+             raise PostDataException("Could not post data after 3 attempts for url: " + str(url))
+         else:
+             attempts = attempts + 1
+             time.sleep(3)
+             postRestParams(url,params,auth,attempts)         
+         return True
+     return response
+
+
 def deleteContent(url):
      response = None
      try:
