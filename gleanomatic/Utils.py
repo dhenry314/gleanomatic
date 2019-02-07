@@ -181,7 +181,7 @@ def getJSONFromResponse(response):
         try:
             content = json.loads(response.data.decode(encoding))
         except json.decoder.JSONDecodeError as e:
-            print(str(e))
+            raise ValueError("Could not parse json content from: " + str(response.data.decode(encoding)))
         return content
     return False
     

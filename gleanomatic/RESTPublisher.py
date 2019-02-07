@@ -19,9 +19,9 @@ class RESTPublisher():
         self.logger.info("Initializing RESTPublisher")
         self.reader = RSReader(sourceNamespace,setNamespace,{"batchTag":self.batchTag},mode)
   
-    def run(self):
+    def run(self,limit=None):
         try:
-            self.reader.loadIDs()
+            self.reader.loadIDs(limit)
         except Exception as e:
             raise GleanomaticError("Could not load IDs from reader.",e,self.logger) 
         self.logger.info("Loaded " + str(len(self.reader.resourceIDs)) + " resourceIDs into reader.")
@@ -35,7 +35,18 @@ class RESTPublisher():
                 break;
             # get record, prepare the record, and post the record
             for resID in batchIDs:
-                record = self.reader.getResourceContent(resID)
+                try:
+                    record = self.reader.getResourceContent(resID)
+                except Exception as e:
+                    warningMsg =  "Could not get record from resourceContent with resID: "
+                    warningMsg = warningMsg + str(resID) + " ERROR: " + str(e)
+                    self.logger.warning( warningMsg )
+                    continue
+                if not record:
+                    warningMsg =  "Could not get record from resourceContent with resID: "
+                    warningMsg = warningMsg + str(resID) + " ERROR: " + str(e)
+                    self.logger.warning( warningMsg )
+                    continue
                 record = self.prepareRecord(record,resID)
                 result = self.publishRecord(record)
                 internalResult = self.handleResponse(result)

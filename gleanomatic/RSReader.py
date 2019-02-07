@@ -31,7 +31,7 @@ class RSReader:
         self.setNamespace = setNamespace
         self.mode = mode
         
-    def loadIDs(self):
+    def loadIDs(self,limit=None):
         if self.mode == 'all':
             self.index = self.targetEndpoint.loadResourceListIndex(self.sourceNamespace,self.setNamespace)
             while True:
@@ -41,10 +41,15 @@ class RSReader:
                 else:
                     for resourceID in ids:
                         self.resourceIDs.append(resourceID)    
+                if limit:
+                    if len(self.resourceIDs) > limit:
+                        break
         elif self.mode == 'latest':
             latestTag = None
             batchTags = []
             capURLs = self.targetEndpoint.loadCapabilityList(self.sourceNamespace,self.setNamespace)
+            if limit:
+                capURLs = capURLs[:limit]
             if capURLs:
                 for record in capURLs:
                     thisTag = None
