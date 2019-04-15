@@ -1,3 +1,5 @@
+For full documentation: [GleanomaticDoc.pdf](http://climate-walker.org/content/images/GleanomaticDoc.pdf)
+
 # gleanomatic with RSEngine to write to and read from ResourceSync endpoints.
 
 ## Deploy with a custom project
